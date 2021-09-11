@@ -9,6 +9,14 @@ const port = 3232;
 
 let httpd:http.Server | null = null;
 
+function delay(duration:number): Promise<void> {
+  return new Promise(function(resolve, reject){
+    setTimeout(() => {
+      resolve();
+    }, duration);
+  });
+}
+
 function startServer(): Promise<boolean> {
   return new Promise<boolean>(resolve => {
     if(httpd !== null) {
@@ -55,7 +63,7 @@ let statusBarItem = window.createStatusBarItem();
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  statusBarItem.text = 'ESP32 Update';
+  statusBarItem.text = 'Update　ESP';
   statusBarItem.command = 'vsc-esp-updater.start';
   statusBarItem.show();
 
@@ -64,6 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
     async () => {
       if(httpd === null) {
         await startServer();
+        await delay(500);
       }
 
       vscode.env.openExternal(
