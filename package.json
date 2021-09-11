@@ -1,5 +1,5 @@
 {
-  "name": "vsc-esp-updater",
+	"name": "vsc-esp-updater",
 	"displayName": "vsc-esp-updater",
 	"description": "",
 	"version": "0.0.1",
@@ -10,13 +10,13 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:vsc-esp-updater.helloWorld"
+		"onCommand:vsc-esp-updater.start"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "vsc-esp-updater.helloWorld",
+				"command": "vsc-esp-updater.start",
 				"title": "Hello World"
 			}
 		]
@@ -33,18 +33,20 @@
 		"test": "node ./out/test/runTest.js"
 	},
 	"devDependencies": {
-		"@types/vscode": "^1.60.0",
 		"@types/glob": "^7.1.3",
 		"@types/mocha": "^8.2.2",
 		"@types/node": "14.x",
-		"eslint": "^7.27.0",
+		"@types/vscode": "^1.60.0",
 		"@typescript-eslint/eslint-plugin": "^4.26.0",
 		"@typescript-eslint/parser": "^4.26.0",
+		"eslint": "^7.27.0",
 		"glob": "^7.1.7",
+		"html-inline-script-webpack-plugin": "^2.0.2",
+		"html-webpack-plugin": "^5.3.2",
 		"mocha": "^8.4.0",
+		"ts-loader": "^9.2.2",
 		"typescript": "^4.3.2",
 		"vscode-test": "^1.5.2",
-		"ts-loader": "^9.2.2",
 		"webpack": "^5.38.1",
 		"webpack-cli": "^4.7.0"
 	}

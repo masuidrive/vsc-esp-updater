@@ -2,6 +2,8 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 const http = require("http");
+const fs = require('fs');
+const path = require('path');
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -16,20 +18,27 @@ export function activate(context: vscode.ExtensionContext) {
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
   let disposable = vscode.commands.registerCommand(
-    "vsc-esp-updater.helloWorld",
+    "vsc-esp-updater.start",
     async () => {
       // The code you place here will be executed every time your command is executed
       // Display a message box to the user
       // vscode.window.showInformationMessage("Hello World from vsc-esp-updater!");
       http
       .createServer((req: any, res: any) => {
-        res.writeHead(200, { "Content-Type": "text/plain" });
-        res.end("Hello World\n");
+        if(req.url === '/') {
+          res.writeHead(200, { "Content-Type": "text/html" });
+          res.write(fs.readFileSync(path.resolve(__dirname, 'index.html')));
+        }
+        else {
+          res.writeHead(404, { "Content-Type": "text/plain" });
+          res.write("404 Not Found " + req.url);
+        }
+
       })
-      .listen(3000, () => console.log("Server http://localhost:3000"));
+      .listen(3000, () => console.error("Server http://localhost:3000"));
+
       vscode.env.openExternal(
         vscode.Uri.parse(
-          // "https://www.w3schools.com/python/python_functions.asp"
           "http://localhost:3000/"
         )
       );
