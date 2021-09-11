@@ -1,6 +1,6 @@
 {
 	"name": "vsc-esp-updater",
-	"displayName": "vsc-esp-updater",
+	"displayName": "ESP Updater",
 	"description": "",
 	"version": "0.0.1",
 	"engines": {
@@ -10,14 +10,19 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:vsc-esp-updater.start"
+		"onCommand:vsc-esp-updater.start",
+		"onCommand:vsc-esp-updater.stop"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
 		"commands": [
 			{
 				"command": "vsc-esp-updater.start",
-				"title": "Hello World"
+				"title": "Start ESP Updater on browser"
+			},
+			{
+				"command": "vsc-esp-updater.stop",
+				"title": "Stop ESP Updater on browser"
 			}
 		]
 	},

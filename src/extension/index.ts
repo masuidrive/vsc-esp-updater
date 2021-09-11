@@ -1,30 +1,21 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-const http = require("http");
-const fs = require('fs');
-const path = require('path');
+import * as http from "http";
+import * as fs from 'fs';
+import * as path from 'path';
+const { window } = vscode;
+const port = 3232;
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
-  console.log(
-    'Congratulations, your extension "vsc-esp-updater" is now active!'
-  );
+let httpd:http.Server | null = null;
 
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with registerCommand
-  // The commandId parameter must match the command field in package.json
-  let disposable = vscode.commands.registerCommand(
-    "vsc-esp-updater.start",
-    async () => {
-      // The code you place here will be executed every time your command is executed
-      // Display a message box to the user
-      // vscode.window.showInformationMessage("Hello World from vsc-esp-updater!");
-      http
-      .createServer((req: any, res: any) => {
+function startServer(): Promise<boolean> {
+  return new Promise<boolean>(resolve => {
+    if(httpd !== null) {
+      resolve(false);
+    }
+    try {
+      httpd = http.createServer((req: any, res: any) => {
         if(req.url === '/') {
           res.writeHead(200, { "Content-Type": "text/html" });
           res.write(fs.readFileSync(path.resolve(__dirname, 'index.html')));
@@ -33,20 +24,70 @@ export function activate(context: vscode.ExtensionContext) {
           res.writeHead(404, { "Content-Type": "text/plain" });
           res.write("404 Not Found " + req.url);
         }
+      });
+      httpd.listen(port, () => {
+        resolve(true);
+      });
+    }
+    catch(e) {
+      httpd = null;
+      resolve(false);
+    }
+  });
+}
 
-      })
-      .listen(3000, () => console.error("Server http://localhost:3000"));
+function stopServer(): Promise<boolean> {
+  return new Promise<boolean>(resolve => {
+    if(httpd === null) {
+      resolve(true);
+    }
+    try {
+      httpd?.close();
+      resolve(true);
+    }
+    catch(e) {
+      resolve(false);
+    }
+  });
+}
+
+let statusBarItem = window.createStatusBarItem();
+// this method is called when your extension is activated
+// your extension is activated the very first time the command is executed
+export function activate(context: vscode.ExtensionContext) {
+  statusBarItem.text = 'ESP32 Update';
+  statusBarItem.command = 'vsc-esp-updater.start';
+  statusBarItem.show();
+
+  let disposableStart = vscode.commands.registerCommand(
+    "vsc-esp-updater.start",
+    async () => {
+      if(httpd === null) {
+        await startServer();
+      }
 
       vscode.env.openExternal(
         vscode.Uri.parse(
-          "http://localhost:3000/"
+          `http://localhost:${port}`
         )
       );
     }
   );
+  context.subscriptions.push(disposableStart);
 
-  context.subscriptions.push(disposable);
+  let disposableStop = vscode.commands.registerCommand(
+    "vsc-esp-updater.stop",
+    async () => {
+      if(await stopServer()) {
+        statusBarItem.hide();
+      }
+    }
+  );
+  context.subscriptions.push(disposableStop);
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+  stopServer();
+  statusBarItem.hide();
+}
