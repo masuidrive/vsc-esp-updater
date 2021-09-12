@@ -2,7 +2,7 @@
  * @name toByteArray
  * Convert a string to a byte array
  */
- function toByteArray(str) {
+ export function toByteArray(str) {
     let byteArray = [];
     for (let i = 0; i < str.length; i++) {
       let charcode = str.charCodeAt(i);
@@ -13,11 +13,11 @@
     return byteArray;
   }
   
-  function fromByteArray(byteArray) {
+  export function fromByteArray(byteArray) {
     return String.fromCharCode.apply(String, byteArray);
   }
   
-  function crc32(data, value=0) {
+  export function crc32(data, value=0) {
     if (data instanceof Array) {
       data = fromByteArray(data);
     }
@@ -36,7 +36,7 @@
     return (-1 ^ n) >>> 0;
   }
   
-  function zipLongest() {
+  export function zipLongest() {
       var args = [].slice.call(arguments);
       var longest = args.reduce(function(a,b){
           return a.length > b.length ? a : b
@@ -47,7 +47,7 @@
       });
   }
   
-  class struct {
+  export class struct {
       static lut = {
         "b": {u: DataView.prototype.getInt8, p: DataView.prototype.setInt8, bytes: 1},
         "B": {u: DataView.prototype.getUint8, p: DataView.prototype.setUint8, bytes: 1},
@@ -63,8 +63,8 @@
           let format = args[0];
           let pointer = 0;
           let data = args.slice(1);
-          if (format.replace(/[<>]/, '').length != data.length) {
-              throw("Pack format to Argument count mismatch");
+          if (format.replace(/[<>]/, '').length !== data.length) {
+              throw new Error("Pack format to Argument count mismatch");
               return;
           }
           let bytes = [];
@@ -82,7 +82,7 @@
   
           function pushBytes(formatChar, value) {
               if (!(formatChar in struct.lut)) {
-                  throw("Unhandled character '" + formatChar + "' in pack format");
+                  throw new Error("Unhandled character '" + formatChar + "' in pack format");
               }
               let dataSize = struct.lut[formatChar].bytes;
               let view = new DataView(new ArrayBuffer(dataSize));
@@ -113,7 +113,7 @@
   
           function pushData(formatChar) {
               if (!(formatChar in struct.lut)) {
-                  throw("Unhandled character '" + formatChar + "' in unpack format");
+                  throw new Error("Unhandled character '" + formatChar + "' in unpack format");
               }
               let dataSize = struct.lut[formatChar].bytes;
               let view = new DataView(new ArrayBuffer(dataSize));
@@ -128,19 +128,25 @@
           return data;
       };
   }
+
   
-  String.prototype.replaceAt = function(index, character) {
-      return this.substr(0, index) + character + this.substr(index + character.length);
-  };
-  
-  Array.prototype.replaceAt = function(index, newArray) {
-      return this.slice(0, index).concat(newArray).concat(this.slice(index + newArray.length));
-  };
-  
-  function* makeFileIterator(content) {
-      for (let line of content.split(/\r?\n/)) {
-          yield line.trim();
-      }
-      return '';
-  }
-  
+/*
+Original:
+
+MIT License
+
+Copyright (c) 2020 Melissa LeBlanc-Williams for Adafruit Industries
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# Adafruit ESPTool
+
+A Web Serial tool for updating your ESP bootloader.
+
+A live copy of the tool is hosted here: https://adafruit.github.io/Adafruit_WebSerial_ESPTool/
+
+*/

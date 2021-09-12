@@ -1,4 +1,11 @@
 'use strict';
+import { toByteArray, struct } from './utils';
+import stubESP32 from './stubs/esp32.json';
+import stubESP32C3 from './stubs/esp32c3.json';
+import stubESP32H2 from './stubs/esp32h2.json';
+import stubESP32S2 from './stubs/esp32s2.json';
+import stubESP32S3 from './stubs/esp32s3.json';
+import stubESP8266 from './stubs/esp8266.json';
 
 let port;
 let reader;
@@ -37,6 +44,16 @@ const flashFreq = {
     '40m': 0,
     '80m': 0xf
 };
+
+const stubs = {
+  'esp32': stubESP32,
+  'esp32c3': stubESP32C3,
+  'esp32h2': stubESP32H2,
+  'esp32s2': stubESP32S2,
+  'esp32s3': stubESP32S3,
+  'esp8266': stubESP8266,
+};
+
 
 // Defaults
 // Flash Frequency: 40m
@@ -116,6 +133,7 @@ const magicValues = {
 
 export class EspLoader {
   constructor(params) {
+
     this._chipfamily = null;
     this.readTimeout = 3000;  // Arbitrary number for now. This should be set more dynamically in the sendCommand function
     this._efuses = new Array(4).fill(0);
@@ -197,7 +215,7 @@ export class EspLoader {
       } else if (((mac1 >> 16) & 0xFF) === 1) {
         oui = [0xAC, 0xD0, 0x74];
       } else {
-        throw("Couldnt determine OUI");
+        throw new Error("Couldnt determine OUI");
       }
 
       macAddr[0] = oui[0];
@@ -221,7 +239,7 @@ export class EspLoader {
       macAddr[4] = mac1 >> 8 & 0xFF;
       macAddr[5] = mac1 & 0xFF;
     } else {
-      throw("Unknown chip family");
+      throw new Error("Unknown chip family");
     }
     return macAddr;
   };
@@ -245,7 +263,7 @@ export class EspLoader {
     } else if (this._chipfamily === ESP32S2) {
       baseAddr = 0x6001A000;
     } else {
-      throw("Don't know what chip this is");
+      throw new Error("Don't know what chip this is");
     }
     for (let i = 0; i < 4; i++) {
       this._efuses[i] = await this.readRegister(baseAddr + 4 * i);
@@ -302,7 +320,7 @@ export class EspLoader {
         return value["chipId"];
       }
     }
-    throw("Unable to detect Chip");
+    throw new Error("Unable to detect Chip");
   }
 
   /**
@@ -356,7 +374,7 @@ export class EspLoader {
     }
 
     if (data === null || data.length < statusLen) {
-      throw("Didn't get enough status bytes");
+      throw new Error("Didn't get enough status bytes");
     }
     let status = data.slice(-statusLen, data.length);
     data = data.slice(0, -statusLen);
@@ -367,9 +385,9 @@ export class EspLoader {
     }
     if (status[0] === 1) {
       if (status[1] === ROM_INVALID_RECV_MSG) {
-        throw("Invalid (unsupported) command " + this.toHex(opcode));
+        throw new Error("Invalid (unsupported) command " + this.toHex(opcode));
       } else {
-        throw("Command failure error code " + this.toHex(status[1]));
+        throw new Error("Command failure error code " + this.toHex(status[1]));
       }
     }
 
@@ -587,10 +605,10 @@ export class EspLoader {
         }
         if (data[0] !== 0 && data[1] === ROM_INVALID_RECV_MSG) {
           inputBuffer = [];
-          throw("Invalid (unsupported) command " + this.toHex(opcode));
+          throw new Error("Invalid (unsupported) command " + this.toHex(opcode));
         }
     }
-    throw("Response doesn't match request");
+    throw new Error("Response doesn't match request");
   };
 
 /**
@@ -654,7 +672,7 @@ export class EspLoader {
         //inputBuffer = [];
         this.logMsg("Changed baud rate to " + baud);
       } catch (e) {
-        throw("Unable to change the baud rate, please try setting the connection speed from " + baud + " to 115200 and reconnecting.");
+        throw new Error("Unable to change the baud rate, please try setting the connection speed from " + baud + " to 115200 and reconnecting.");
       }
     }
   };
@@ -675,7 +693,7 @@ export class EspLoader {
       await this.sleep(100);
     }
 
-    throw("Couldn't sync to ESP. Try resetting.");
+    throw new Error("Couldn't sync to ESP. Try resetting.");
   };
 
   /**
@@ -850,15 +868,15 @@ export class EspLoader {
   async memBegin(size, blocks, blocksize, offset) {
     if (this.IS_STUB) {
       let stub = await this.getStubCode();
-      let load_start = offset;
-      let load_end = offset + size;
+      let loadStart = offset;
+      let loadEnd = offset + size;
       for (let [start, end] of [
         [stub.data_start, stub.data_start + stub.data.length],
         [stub.text_start, stub.text_start + stub.text.length]]
       ) {
-        if (load_start < end && load_end > start) {
-          throw("Software loader is resident at " + this.toHex(start, 8) + "-" + this.toHex(end, 8) + ". " +
-                "Can't load binary at overlapping address range " + this.toHex(load_start, 8) + "-" + this.toHex(load_end, 8) + ". " +
+        if (loadStart < end && loadEnd > start) {
+          throw new Error("Software loader is resident at " + this.toHex(start, 8) + "-" + this.toHex(end, 8) + ". " +
+                "Can't load binary at overlapping address range " + this.toHex(loadStart, 8) + "-" + this.toHex(loadEnd, 8) + ". " +
                 "Try changing the binary loading address.");
         }
       }
@@ -901,8 +919,8 @@ export class EspLoader {
   }
 
   async getStubCode() {
-    let response = await fetch('esptool/stubs/' + this.getStubFile() + '.json');
-    let stubcode = await response.json();
+    // let response = await fetch('esptool/stubs/' + this.getStubFile() + '.json');
+    let stubcode = stubs[this.getStubFile()]; // await response.json();
 
     // Base64 decode the text and data
     stubcode.text = toByteArray(atob(stubcode.text));
@@ -969,7 +987,7 @@ export class EspLoader {
     p = String.fromCharCode(...p);
 
     if (p !== 'OHAI') {
-      throw "Failed to start stub. Unexpected response: " + p;
+      throw new Error("Failed to start stub. Unexpected response: " + p);
     }
     this.logMsg("Stub is now running...");
     this.stubClass = new EspStubLoader({

@@ -1,4 +1,5 @@
 import { EspLoader } from './esptool';
+import { toByteArray, fromByteArray, crc32, zipLongest, struct } from './utils';
 
 let espTool;
 

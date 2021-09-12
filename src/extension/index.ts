@@ -17,6 +17,10 @@ function delay(duration:number): Promise<void> {
   });
 }
 
+function getWorkspacePath():string | null {
+  return null;
+}
+
 function startServer(): Promise<boolean> {
   return new Promise<boolean>(resolve => {
     if(httpd !== null) {
@@ -60,19 +64,20 @@ function stopServer(): Promise<boolean> {
 }
 
 let statusBarItem = window.createStatusBarItem();
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   statusBarItem.text = 'Update　ESP';
   statusBarItem.command = 'vsc-esp-updater.start';
   statusBarItem.show();
+  context.subscriptions.push(statusBarItem);
+  console.error(vscode.window.activeTextEditor?.document?.uri?.fsPath);
+  // console.error(vscode.workspace.getWorkspaceFolder(vscode.window.activeTextEditor!.document!.uri)）;
 
   let disposableStart = vscode.commands.registerCommand(
     "vsc-esp-updater.start",
     async () => {
       if(httpd === null) {
         await startServer();
-        await delay(500);
+        await delay(1000);
       }
 
       vscode.env.openExternal(
@@ -98,5 +103,4 @@ export function activate(context: vscode.ExtensionContext) {
 // this method is called when your extension is deactivated
 export function deactivate() {
   stopServer();
-  statusBarItem.hide();
 }
