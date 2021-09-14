@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es5",      /*ES5にトランスコンパイル*/
+    "target": "es6",
     "module": "commonjs",
     "lib": [
       "es2018",
       "dom"
     ],
-    "allowJs": true, /*JavaScriptのコンパイルには必須*/
-    "checkJs": true, /*JavaScriptで簡易的な型チェックを行う*/
+    "allowJs": true,
+    "checkJs": true,
     "sourceMap": true,
     "inlineSources": true,
     "strict": true,
