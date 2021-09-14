@@ -52,12 +52,33 @@ const web_config = {
   },
   plugins: [
     new HTMLWebpackPlugin({
-      inlineSource: '.(js|css)$',
+      inlineSource: '.(js|scss)$',
       template: "index.html",
       minify: false,
     }),
     new HTMLInlineScriptPlugin()
-  ]
+  ],
+  module: {
+    rules: [
+      {
+        test: /\.ts$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'ts-loader'
+          }
+        ]
+      },
+      {
+        test: /\.s[ac]ss$/i,
+        use: [
+          "style-loader",
+          "css-loader",
+          "sass-loader",
+        ],
+      },
+    ],
+},
 };
 
 module.exports = [

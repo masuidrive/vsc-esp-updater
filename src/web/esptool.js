@@ -423,6 +423,19 @@ export class EspLoader {
     await this.writeToStream(packet);
   };
 
+
+async  readLoop() {
+  let reader = port.readable.getReader();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) {
+      reader.releaseLock();
+      break;
+    }
+    inputBuffer = inputBuffer.concat(Array.from(value));
+  }
+}
+
   /**
    * @name connect
    * Opens a Web Serial connection to a micro:bit and sets up the input and
@@ -467,6 +480,8 @@ export class EspLoader {
 
     outputStream = port.writable;
     inputStream = port.readable;
+  
+    await readLoop();
   }
 
   connected() {
