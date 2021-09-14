@@ -1,6 +1,6 @@
 MIT License: Copyright Yuichiro Masui @masuidrive 2021-
 
-===== https://github.com/adafruit/Adafruit_WebSerial_ESPTool =====
+===== Based on https://github.com/adafruit/Adafruit_WebSerial_ESPTool =====
 MIT License
 
 Copyright (c) 2020 Melissa LeBlanc-Williams for Adafruit Industries
