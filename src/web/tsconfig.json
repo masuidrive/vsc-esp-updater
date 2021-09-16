@@ -6,10 +6,9 @@
       "es2018",
       "dom"
     ],
-    "allowJs": true,
-    "checkJs": true,
     "sourceMap": true,
     "inlineSources": true,
     "strict": true,
+    "rootDir": ".",
   }
 }

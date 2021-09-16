@@ -1,5 +1,6 @@
 //@ts-ignore
 import { EspLoader } from "./esptool";
+import { initTerminal } from "./terminal";
 import "./style.scss";
 
 let espTool: any;
@@ -58,6 +59,8 @@ window.addEventListener("load", () => {
     debugMsg: console.log,
     debug: console.log,
   });
+  initTerminal("terminal");
+
   document.getElementById("btnConnect")!.addEventListener("click", doConnect);
   document.getElementById("btnErase")!.addEventListener("click", doErase);
   document.getElementById("btnProgram")!.addEventListener("click", doProgam);

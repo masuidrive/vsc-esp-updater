@@ -34,7 +34,10 @@ const ext_config = {
         exclude: /node_modules/,
         use: [
           {
-            loader: 'ts-loader'
+            loader: 'ts-loader',
+            options: {
+              configFile: "src/extension/tsconfig.json",
+            },
           }
         ]
       }
@@ -46,9 +49,13 @@ const web_config = {
   mode: 'production',
 
   context: path.resolve(__dirname, 'src', 'web'),
-  entry: './index.js',
+  entry: './index.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
+  },
+  resolve: {
+    // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
+    extensions: ['.ts', '.js']
   },
   plugins: [
     new HTMLWebpackPlugin({
@@ -65,7 +72,10 @@ const web_config = {
         exclude: /node_modules/,
         use: [
           {
-            loader: 'ts-loader'
+            loader: 'ts-loader',
+            options: {
+              configFile: "src/web/tsconfig.json",
+            },
           }
         ]
       },

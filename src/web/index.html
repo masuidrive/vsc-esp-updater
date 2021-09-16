@@ -8,8 +8,18 @@
   </head>
 
   <body>
-    <button id="btnConnect" type="button">Connect</button><br/>
-    <button id="btnErase" type="button">Erase</button><br/>
-    <button id="btnProgram" type="button">Program</button><br/>
+    <div id="top-nav" class="d-flex bd-highlight align-items-center">
+      <div class="ps-3 flex-fill">
+        <span class="esp-brand me-4">ESP Updater</span>
+
+        <button id="btnProgram" type="button" class="btn btn-primary me-3">Update</button>
+        <button id="btnErase" type="button" class="btn btn-outline-secondary">Erase</button>
+      </div>
+      <div class="pe-3 flex-shrink-1 bd-highlight">
+        <button id="btnConnect" type="button" class="btn btn-secondary me-2">Switch to other device</button>
+      </div>
+    </div>
+
+    <div id="terminal"></div>
   </body>
 </html>

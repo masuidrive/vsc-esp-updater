@@ -1,3 +1,25 @@
+@import "../../node_modules/bootstrap/scss/bootstrap";
+@import "../../node_modules/xterm/css/xterm";
+
+$top-nav: 64px;
+
 html, body {
-  background-color: blue;
+  background-color: white;
+}
+
+.esp-brand {
+  font-size: 1.25rem;
+}
+
+#top-nav {
+  height: $top-nav;
+}
+
+#terminal {
+  position: absolute;
+  left: 0;
+  top: 64px;
+  border: 0;
+  width: 100%;
+  height: calc(100vh - $top-nav);
 }
