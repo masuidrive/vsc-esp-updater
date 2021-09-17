@@ -1,7 +1,7 @@
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 
-const term = new Terminal({});
+export const term = new Terminal({});
 
 export function termInit(selector: string) {
   const fitAddon = new FitAddon();
