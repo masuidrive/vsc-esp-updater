@@ -12,18 +12,27 @@
       <div class="ps-3 flex-shrink-1">
         <span class="esp-brand me-4">ESP Updater</span>
         <span id="esp-project-name" class="esp-project-name me-3">Project name</span>
-
-        <button id="btnProgram" type="button" class="btn btn-primary me-3">Update</button>
-        <button id="btnProgram" type="button" class="btn btn-outline-primary me-3">Cancel</button>
-        <!-- button id="btnErase" type="button" class="btn btn-outline-secondary">Erase</button -->
       </div>
-      <div class="ps-3 flex-fill">
+
+      <div id="nav-connect" class="ps-3 flex-shrink-1">
+        <button id="btnConnect" type="button" class="btn btn-primary me-3">Connect to a ESP device</button>
+      </div>
+
+      <div id="nav-update" class="ps-3 flex-shrink-1">
+        <button id="btnProgram" type="button" class="btn btn-primary me-3">Update</button>
+      </div>
+
+      <div id="nav-cancel" class="ps-3 flex-shrink-1">
+        <button id="btnCanel" type="button" class="btn btn-outline-primary me-3">Cancel</button>
+      </div>
+
+      <div id="nav-progress" class="ps-3 flex-fill">
         <div class="progress" style="width: 128px">
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
         </div>
       </div>
-      <div class="pe-3 flex-shrink-1 bd-highlight">
-        <button id="btnConnect" type="button" class="btn btn-secondary me-2">Switch device</button>
+      <div id="nav-reconnect" class="pe-3 flex-shrink-1 bd-highlight">
+        <button id="btnConnect" type="button" class="btn btn-secondary me-2">Switch a device</button>
       </div>
     </div>
 

@@ -1,6 +1,6 @@
 //@ts-ignore
 import { EspLoader } from "./esptool";
-import { initTerminal } from "./terminal";
+import { termInit, termClear, termWrite, termWriteln } from "./terminal";
 import "./style.scss";
 
 let espTool: any;
@@ -13,12 +13,6 @@ function formatMacAddr(macAddr: [number]) {
 
 async function doConnect() {
   await espTool.connect();
-  if (await espTool.sync()) {
-    console.log("Connected to " + (await espTool.chipName()));
-    console.log("MAC Address: " + formatMacAddr(espTool.macAddr()));
-    espTool = await espTool.runStub();
-  }
-  console.log("connected");
 }
 
 async function doErase() {
@@ -27,12 +21,17 @@ async function doErase() {
 
 async function doProgam() {
   try {
+    if (await espTool.sync()) {
+      termWriteln("Bootload mode on " + (await espTool.chipName()));
+      termWriteln("MAC Address: " + formatMacAddr(espTool.macAddr()));
+      espTool = await espTool.runStub();
+    }
+
     let files = await (
       await fetch("data/files.json", {
         cache: "no-cache",
       })
     ).json();
-    console.log(files);
 
     for (let i in files["addresses"]) {
       let addr = files["addresses"][i];
@@ -55,12 +54,12 @@ async function doProgam() {
 window.addEventListener("load", () => {
   espTool = new EspLoader({
     updateProgress: console.log,
-    logMsg: console.log,
+    logMsg: termWrite,
     debugMsg: console.log,
     debug: console.log,
+    monitor: termWrite,
   });
-  initTerminal("terminal");
-
+  termInit("terminal");
   document.getElementById("btnConnect")!.addEventListener("click", doConnect);
   // document.getElementById("btnErase")!.addEventListener("click", doErase);
   document.getElementById("btnProgram")!.addEventListener("click", doProgam);

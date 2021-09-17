@@ -12,6 +12,7 @@ let reader;
 let inputStream;
 let outputStream;
 let inputBuffer = [];
+let serialMode = 'monitor';
 
 const esp8266FlashSizes = {
     "512KB": 0x00,
@@ -120,7 +121,7 @@ const ESP_RAM_BLOCK = 0x1800;
 const DEFAULT_TIMEOUT = 3000;
 const CHIP_ERASE_TIMEOUT = 120000;             // timeout for full chip erase in ms
 const MAX_TIMEOUT = CHIP_ERASE_TIMEOUT * 2;    // longest any command can run in ms
-const SYNC_TIMEOUT = 100;                      // timeout for syncing with bootloader in ms
+const SYNC_TIMEOUT = 500;                      // timeout for syncing with bootloader in ms
 const ERASE_REGION_TIMEOUT_PER_MB = 30000;     // timeout (per megabyte) for erasing a region in ms
 const MEM_END_ROM_TIMEOUT = 500;
 
@@ -150,6 +151,7 @@ export class EspLoader {
       this.logMsg = console.log;
     }
     this.debug = false;
+
     if (this.isFunction(params.debugMsg)) {
       if (params.debug !== false) {
         this.debug = true;
@@ -158,6 +160,13 @@ export class EspLoader {
     } else {
       this._debugMsg = this.logMsg();
     }
+
+    if (this.isFunction(params.monitor)) {
+      this.monitor = params.monitor;
+    } else {
+      this.monitor = null;
+    }
+
     this.IS_STUB = false;
     this.syncStubDetected = false;
   }
@@ -424,17 +433,25 @@ export class EspLoader {
   };
 
 
-async  readLoop() {
-  let reader = port.readable.getReader();
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) {
-      reader.releaseLock();
-      break;
+  async readLoop() {
+    let reader = port.readable.getReader();
+    while (true) {
+      const { value, done } = await reader.read();
+      console.log("readLoop", done, value);
+      if (done) {
+        reader.releaseLock();
+        break;
+      }
+
+      if(serialMode === 'monitor') {
+        this.monitor(value);
+      }
+      else {
+        this.monitor(value);
+        inputBuffer = inputBuffer.concat(Array.from(value));
+      }
     }
-    inputBuffer = inputBuffer.concat(Array.from(value));
   }
-}
 
   /**
    * @name connect
@@ -444,7 +461,7 @@ async  readLoop() {
   async connect() {
     // - Request a port and open a connection.
     port = await navigator.serial.requestPort();
-
+    serialMode = 'monitor';
     // - Wait for the port to open.toggleUIConnected
     if (this.getChromeVersion() < 86) {
       await port.open({ baudrate: ESP_ROM_BAUD });
@@ -454,10 +471,10 @@ async  readLoop() {
 
     const signals = await port.getSignals();
 
-    this.logMsg("Connected successfully.");
+    this.logMsg("Connected successfully.\r\n");
 
-    this.logMsg("Try to reset..");
     /*
+    this.logMsg("Try to reset..");
     await port.setSignals({ dataTerminalReady: false, requestToSend: false });
     await new Promise(resolve => setTimeout(resolve, 100));
     await port.setSignals({ dataTerminalReady: true, requestToSend: false });
@@ -468,20 +485,14 @@ async  readLoop() {
     await new Promise(resolve => setTimeout(resolve, 100));
     //await port.setSignals({ dataTerminalReady: false, requestToSend: false });
     //await new Promise(resolve => setTimeout(resolve, 50));
-    */
-    await port.setSignals({ dataTerminalReady: false, requestToSend: true });
-    await new Promise(resolve => setTimeout(resolve, 100));
-    await port.setSignals({ dataTerminalReady: true, requestToSend: false });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    await port.setSignals({ dataTerminalReady: false, requestToSend: false });
-    //await new Promise(resolve => setTimeout(resolve, 1000));
-    
     this.logMsg("done reset..");
+    */
+
 
     outputStream = port.writable;
     inputStream = port.readable;
-  
-    await readLoop();
+
+    this.readLoop();
   }
 
   connected() {
@@ -518,6 +529,8 @@ async  readLoop() {
     const writer = outputStream.getWriter();
     await writer.write(new Uint8Array(data));
     writer.releaseLock();
+    console.log("writeToStream: ", data, writer);
+
   }
 
   hexFormatter(bytes) {
@@ -558,7 +571,7 @@ async  readLoop() {
                 if (b === 0xc0) {
                     partialPacket = [];
                 } else {
-                    this.debugMsg("Read invalid data: " + this.hexFormatter(readBytes));
+                    this.debugMsg("Read invalid data: " + this.hexFormatter(readBytes) + ", expect: 0xc0" );
                     this.debugMsg("Remaining data in serial buffer: " + this.hexFormatter(inputBuffer));
                     throw new SlipReadError('Invalid head of packet (' + this.toHex(b) + ')');
                 }
@@ -571,6 +584,7 @@ async  readLoop() {
                 } else {
                     this.debugMsg("Read invalid data: " + this.hexFormatter(readBytes));
                     this.debugMsg("Remaining data in serial buffer: " + this.hexFormatter(inputBuffer));
+                    this.debugMsg('a'+inputBuffer);
                     throw new SlipReadError('Invalid SLIP escape (0xdb, ' + this.toHex(b) + ')');
                 }
             } else if (b === 0xdb) {  // start of escape sequence
@@ -602,7 +616,7 @@ async  readLoop() {
         try {
           packet = await this.readPacket();
         } catch(e) {
-          this.logMsg("Timed out after " + this.readTimeout + " milliseconds.");
+          this.logMsg(".");
           return [null, null];
         }
 
@@ -643,6 +657,10 @@ async  readLoop() {
     }
 
     return packet;
+  };
+
+  clearInputBuffer() {
+    inputBuffer = [];
   };
 
 
@@ -698,9 +716,11 @@ async  readLoop() {
    * ESP ROM bootloader, we will retry a few times
    */
   async sync() {
-    for (let i = 0; i < 5; i++) {
+    serialMode = 'bootmode';
+    for (let i = 0; i < 3; i++) {
       inputBuffer = [];
       let response = await this._sync();
+      this.logMsg("\r\n");
       if (response) {
         await this.sleep(100);
         return true;
@@ -708,6 +728,7 @@ async  readLoop() {
       await this.sleep(100);
     }
 
+    serialMode = 'monitor';
     throw new Error("Couldn't sync to ESP. Try resetting.");
   };
 
@@ -717,8 +738,22 @@ async  readLoop() {
    * any hardware resetting
    */
   async _sync() {
+    this.logMsg("Reset with bootmode");
+    await port.setSignals({ dataTerminalReady: false, requestToSend: true });
+    await this.sleep(100);
+    await port.setSignals({ dataTerminalReady: true, requestToSend: false });
+    await this.sleep(100);
+    await port.setSignals({ dataTerminalReady: false, requestToSend: false });
+    await this.sleep(500);
+
+    console.log(">> send command");
+    this.clearInputBuffer();
     await this.sendCommand(ESP_SYNC, SYNC_PACKET);
+    console.log("<< send command");
+
+    console.log(">> getResponse");
     let [val, data] = await this.getResponse(ESP_SYNC, SYNC_TIMEOUT);
+    console.log("<< getResponse",val,data);
     this.syncStubDetected = (val === 0 ? 1 : 0);
     for (let i = 0; i < 8; i++) {
       let [val, data] = await this.getResponse(ESP_SYNC, SYNC_TIMEOUT);

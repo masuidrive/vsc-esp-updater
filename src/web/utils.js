@@ -12,11 +12,11 @@
     }
     return byteArray;
   }
-  
+
   export function fromByteArray(byteArray) {
     return String.fromCharCode.apply(String, byteArray);
   }
-  
+
   export function crc32(data, value=0) {
     if (data instanceof Array) {
       data = fromByteArray(data);
@@ -35,18 +35,18 @@
     }
     return (-1 ^ n) >>> 0;
   }
-  
+
   export function zipLongest() {
       var args = [].slice.call(arguments);
       var longest = args.reduce(function(a,b){
           return a.length > b.length ? a : b
       }, []);
-  
+
       return longest.map(function(_,i){
           return args.map(function(array){return array[i]})
       });
   }
-  
+
   export class struct {
       static lut = {
         "b": {u: DataView.prototype.getInt8, p: DataView.prototype.setInt8, bytes: 1},
