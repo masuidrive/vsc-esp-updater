@@ -62,6 +62,6 @@ window.addEventListener("load", () => {
   initTerminal("terminal");
 
   document.getElementById("btnConnect")!.addEventListener("click", doConnect);
-  document.getElementById("btnErase")!.addEventListener("click", doErase);
+  // document.getElementById("btnErase")!.addEventListener("click", doErase);
   document.getElementById("btnProgram")!.addEventListener("click", doProgam);
 });

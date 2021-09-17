@@ -55,7 +55,7 @@ const web_config = {
   },
   resolve: {
     // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
-    extensions: ['.ts', '.js']
+    extensions: ['.ts', '.js', '.scss']
   },
   plugins: [
     new HTMLWebpackPlugin({

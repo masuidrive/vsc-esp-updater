@@ -7,7 +7,11 @@ export function initTerminal(selector: string) {
   term.loadAddon(fitAddon);
   term.open(document.getElementById(selector)!);
   fitAddon.fit();
-  term.write("Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ");
+
+  window.addEventListener("resize", () => fitAddon.fit());
+  for (let i = 0; i < 30; ++i) {
+    term.writeln("Hello from \x1B[1;3;31mESP32\x1B[0m $ ");
+  }
 }
 
 export function clearTerminal() {
