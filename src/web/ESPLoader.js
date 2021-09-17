@@ -1,4 +1,5 @@
 'use strict';
+const pako = require('pako');
 
 class ESP8266ROM {
     static CHIP_NAME = "ESP8266";
@@ -1182,6 +1183,7 @@ class ESPLoader {
         var decoded = atob(this.chip.ROM_TEXT);
         var chardata = decoded.split('').map(function(x){return x.charCodeAt(0);});
         var bindata = new Uint8Array(chardata);
+
         var text = pako.inflate(bindata);
 
         decoded = atob(this.chip.ROM_DATA);
