@@ -59,9 +59,22 @@ async function doProgam() {
           cache: "no-cache",
         })
       ).arrayBuffer();
+      /*
+    let fileArr = [];
+    let offset = 0x1000;
+    var rowCount = table.rows.length;
+    var row;
+    for (let index = 1; index < rowCount; index ++) {
+        row = table.rows[index];
+        var offSetObj = row.cells[0].childNodes[0];
+        offset = parseInt(offSetObj.value);
 
-      await espTool.flashData(contents, parseInt(addr, 16), i);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+        var fileObj = row.cells[1].childNodes[0];
+
+        fileArr.push({data:fileObj.data, address:offset});
+    }
+    esploader.write_flash({fileArray: fileArr, flash_size: 'keep'});
+*/
     }
     console.log("done");
   } catch (e) {
@@ -82,3 +95,30 @@ window.addEventListener("load", () => {
   // document.getElementById("btnErase")!.addEventListener("click", doErase);
   document.getElementById("btnProgram")!.addEventListener("click", doProgam);
 });
+/*
+
+consoleStartButton.onclick = async () => {
+    if (device === null) {
+        device = await navigator.serial.requestPort({
+            filters: [{ usbVendorId: 0x10c4 }]
+        });
+        transport = new Transport(device);
+    }
+    lblConsoleFor.style.display = "block";
+    consoleStartButton.style.display = "none";
+    consoleStopButton.style.display = "initial";
+    programDiv.style.display = "none";
+
+    await transport.connect();
+
+    while (true) {
+        let val = await transport.rawRead();
+        if (typeof val !== 'undefined') {
+            term.write(val);
+        } else {
+            break;
+        }
+    }
+    console.log("quitting console");
+}
+*/
