@@ -8,6 +8,7 @@ import { ESPLoader } from "./ESPLoader";
 import { Transport } from "./webserial";
 
 let espTool: any;
+let esploader: ESPLoader;
 
 function formatMacAddr(macAddr: [number]) {
   return macAddr
@@ -18,12 +19,12 @@ const ESP_ROM_BAUD = 115200;
 
 async function doConnect() {
   let device = await navigator.serial.requestPort({
-    filters: [{ usbVendorId: 0x10c4 }],
+    // filters: [{ usbVendorId: 0x10c4 }],
   });
   let transport = new Transport(device);
 
   try {
-    let esploader = new ESPLoader(transport, ESP_ROM_BAUD, term);
+    esploader = new ESPLoader(transport, ESP_ROM_BAUD, term);
     let connected = true;
 
     let chip = await esploader.main_fn();
@@ -39,27 +40,37 @@ async function doErase() {
 
 async function doProgam() {
   try {
+    /*
     if (await espTool.sync()) {
       termWriteln("Bootload mode on " + (await espTool.chipName()));
       termWriteln("MAC Address: " + formatMacAddr(espTool.macAddr()));
       espTool = await espTool.runStub();
     }
-
-    let files = await (
-      await fetch("data/files.json", {
+*/
+    let project = await (
+      await fetch("project.json", {
         cache: "no-cache",
       })
     ).json();
 
-    for (let i in files["addresses"]) {
-      let addr = files["addresses"][i];
-      let url = "data/" + String(addr).replace("0x", "") + ".bin";
+    let files = [];
+    for (let i in project["addresses"]) {
+      let addr = project["addresses"][i];
+      let url = `data/${addr}.bin`;
       let contents = await (
         await fetch(url, {
           cache: "no-cache",
         })
       ).arrayBuffer();
-      /*
+      files.push({ fileArray: contents, address: parseInt(addr, 16) });
+    }
+    try {
+      await esploader.write_flash({ fileArray: files, flash_size: "keep" });
+    } catch (e) {
+      console.error(e);
+    }
+
+    /*
     let fileArr = [];
     let offset = 0x1000;
     var rowCount = table.rows.length;
@@ -75,7 +86,7 @@ async function doProgam() {
     }
     esploader.write_flash({fileArray: fileArr, flash_size: 'keep'});
 */
-    }
+
     console.log("done");
   } catch (e) {
     console.error(e);

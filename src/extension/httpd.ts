@@ -24,10 +24,31 @@ function getAddresses(projectPath: string): [string] | undefined {
         "utf8"
       )
     );
-    return Object.keys(flasherArgs["flash_files"]) as [string];
+    return Object.keys(flasherArgs["flash_files"]).map((addr) =>
+      addr.replace("0x", "")
+    ) as [string];
   } catch (e) {
     return undefined;
   }
+}
+
+function getBinFile(
+  projectPath: string,
+  address: string
+): ArrayBuffer | undefined {
+  const flasherArgs = JSON.parse(
+    fs.readFileSync(
+      path.join(projectPath, "build", "flasher_args.json"),
+      "utf8"
+    )
+  );
+
+  const filename = flasherArgs["flash_files"][address];
+  if (filename === undefined) {
+    return undefined;
+  }
+
+  return fs.readFileSync(path.join(projectPath, "build", filename));
 }
 
 function getChipName(projectPath: string): string | undefined {
@@ -66,13 +87,13 @@ export function startUpdater(projectPath: string): Promise<boolean> {
     }
     try {
       httpd = http.createServer((req: any, res: any) => {
+        const data_path_match = req.url.match(/^\/data\/([0-9a-f]+)\.bin/);
         if (req.url === "/") {
           res.writeHead(200, { "Content-Type": "text/html" });
           res.write(fs.readFileSync(path.resolve(__dirname, "index.html")));
           res.end();
         } else if (req.url === "/project.json") {
-          res.writeHead(200, { "Content-Type": "text/html" });
-          // res.write(fs.readFileSync(path.resolve(__dirname, 'index.html')));
+          res.writeHead(200, { "Content-Type": "application/json" });
           res.write(
             JSON.stringify({
               project_name: getProjectName(projectPath),
@@ -81,6 +102,18 @@ export function startUpdater(projectPath: string): Promise<boolean> {
             })
           );
           res.end();
+        } else if (data_path_match) {
+          const addr = data_path_match[1];
+          let content = getBinFile(projectPath, `0x${addr}`);
+          if (content === undefined) {
+            res.writeHead(404, { "Content-Type": "text/plain" });
+            res.write("404 Not Found " + req.url);
+            res.end();
+          } else {
+            res.writeHead(200, { "Content-Type": "application/octet-stream" });
+            res.write(content!);
+            res.end();
+          }
         } else {
           res.writeHead(404, { "Content-Type": "text/plain" });
           res.write("404 Not Found " + req.url);
