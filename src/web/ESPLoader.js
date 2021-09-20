@@ -732,7 +732,6 @@ class ESPLoader {
         if (wait_response) {
             try {
                 var p = await this.transport.read({timeout: timeout});
-                console.error("Response ",p.length,p);
                 const resp = p[0];
                 const op_ret = p[1];
                 const len_ret = this._bytearray_to_short(p[2], p[3]);
@@ -742,13 +741,10 @@ class ESPLoader {
                 if (op == null || op_ret == op) {
                     return [val, data];
                 } else {
-                    console.error("invalid response> 9",op,op_ret);
                     throw("invalid response");
                 }
             } catch(e) {
                 if (e === "timeout") {
-                    console.error("timeout> 9");
-
                     throw(e);
                 }
             }
@@ -1336,7 +1332,6 @@ class ESPLoader {
 
     write_flash = async ({fileArray=[], flash_size='keep', flash_mode='keep', flash_freq='keep', erase_all=false, compress=true} = {}) => {
         console.log("EspLoader program");
-        console.error("EspLoader program> 1");
         if (flash_size !== 'keep') {
             let flash_end = this.flash_size_bytes(flash_size);
             for (var i = 0; i < fileArray.length; i++) {
@@ -1346,7 +1341,6 @@ class ESPLoader {
                 }
             }
         }
-        console.error("EspLoader program> 2");
 
         if (this.IS_STUB === true && erase_all === true) {
             this.erase_flash();
@@ -1354,7 +1348,6 @@ class ESPLoader {
         let image, address;
         for (var i = 0; i < fileArray.length; i++) {
             console.log("Data Length " + fileArray[i].data.length);
-            console.error("Data Length " + fileArray[i].data.length);
             //image = this.pad_array(fileArray[i].data, Math.floor((fileArray[i].data.length + 3)/4) * 4, 0xff);
             // XXX : handle padding
             image = fileArray[i].data;
@@ -1457,6 +1450,6 @@ class ESPLoader {
 export { ESPLoader };
 
 /**
- * Changed by masuidrive and Apache 2.0 license.
+ * Modified by masuidrive and Apache 2.0 license.
  * The code is based on Copyright (c) 2021 Espressif Systems (Shanghai) Co. Ltd. It is licensed under Apache 2.0 license, as described in https://github.com/espressif/esptool-js
  */

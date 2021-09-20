@@ -2,10 +2,12 @@
 	"name": "vsc-esp-updater",
 	"displayName": "ESP Updater",
 	"description": "",
+	"publisher": "masuidrive",
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.60.0"
 	},
+	"repository": "http://github.com/masuidrive/vsc-esp-updater.git",
 	"categories": [
 		"Other"
 	],
@@ -14,6 +16,7 @@
 		"onCommand:vsc-esp-updater.stop"
 	],
 	"main": "./dist/extension.js",
+	"browser": "./dist/extension.js",
 	"contributes": {
 		"commands": [
 			{

@@ -2,18 +2,28 @@ import * as fs from "fs";
 import * as path from "path";
 
 // Search ESP project path
-export function findESPProjectPath(
-  codePath: string,
-  count = 0
-): string | undefined {
-  if (codePath === "" || codePath === "/" || count > 30) {
-    return undefined;
+export function findESPProjectPath(projectPath: string, depth = 0): string[] {
+  const basename = path.basename(projectPath);
+  if (
+    projectPath === "" ||
+    projectPath === "/" ||
+    basename === "node_modules" ||
+    depth > 3
+  ) {
+    return [];
   }
 
-  const builtFilePath = path.join(codePath, "build", "flasher_args.json");
+  const builtFilePath = path.join(projectPath, "build", "flasher_args.json");
   if (fs.existsSync(builtFilePath)) {
-    return codePath;
+    return [projectPath];
   }
-  const nextPath = codePath.split(path.sep).slice(0, -1).join(path.sep);
-  return findESPProjectPath(nextPath ?? "/", count + 1);
+  const dirents = fs.readdirSync(projectPath, { withFileTypes: true });
+  const dirs = dirents
+    .filter((dirent) => dirent.isDirectory())
+    .map(({ name }) => name);
+  let result: string[] = [];
+  for (let dir of dirs) {
+    result = result.concat(findESPProjectPath(dir, depth + 1));
+  }
+  return result;
 }

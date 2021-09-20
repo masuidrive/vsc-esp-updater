@@ -28,20 +28,22 @@ export function activate(context: vscode.ExtensionContext) {
   let disposableStart = vscode.commands.registerCommand(
     "vsc-esp-updater.start",
     async () => {
-      // path of active text editor
-      const activeFilePath =
-        vscode.window.activeTextEditor?.document?.uri?.fsPath;
-      if (activeFilePath === undefined) {
-        vscode.window.showInformationMessage("Can't file active source code.");
-        return;
+      const folders =
+        vscode.workspace.workspaceFolders?.map((folder) => folder.uri.path) ??
+        [];
+
+      let projectsPath: string[] = [];
+      for (let folder of folders) {
+        projectsPath = projectsPath.concat(findESPProjectPath(folder));
       }
 
-      const activeDirPath = path.dirname(activeFilePath!);
-      const projectPath = findESPProjectPath(activeDirPath);
-      if (projectPath === undefined) {
+      if (projectsPath.length === 0) {
         vscode.window.showInformationMessage("Can't find built image file");
         return;
       }
+
+      const projectPath = projectsPath[0];
+      console.info("projectPath", projectPath);
 
       // stop httpd if changed project path
       if (projectPath !== currentProjectPath) {
