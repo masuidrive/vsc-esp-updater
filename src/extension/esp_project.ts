@@ -12,6 +12,9 @@ export function findESPProjectPath(projectPath: string, depth = 0): string[] {
   ) {
     return [];
   }
+  if (!fs.existsSync(projectPath)) {
+    return [];
+  }
 
   const builtFilePath = path.join(projectPath, "build", "flasher_args.json");
   if (fs.existsSync(builtFilePath)) {

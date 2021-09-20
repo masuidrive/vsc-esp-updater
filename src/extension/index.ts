@@ -31,7 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
       const folders =
         vscode.workspace.workspaceFolders?.map((folder) => folder.uri.path) ??
         [];
-
+console.error("folders",folders);
       let projectsPath: string[] = [];
       for (let folder of folders) {
         projectsPath = projectsPath.concat(findESPProjectPath(folder));
