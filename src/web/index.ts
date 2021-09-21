@@ -1,6 +1,5 @@
-//@ts-ignore
-import { EspLoader } from "./esptool";
 import { termInit, termClear, termWrite, termWriteln, term } from "./terminal";
+import { arrayBufferToString } from "./utils";
 import "./style.scss";
 //@ts-ignore
 import { ESPLoader } from "./ESPLoader";
@@ -62,10 +61,13 @@ async function doProgam() {
           cache: "no-cache",
         })
       ).arrayBuffer();
-      files.push({ fileArray: contents, address: parseInt(addr, 16) });
+      files.push({
+        data: arrayBufferToString(contents),
+        address: parseInt(addr, 16),
+      });
     }
     try {
-      await esploader.write_flash({ fileArray: files, flash_size: "keep" });
+      await esploader.write_flash({ fileArray: files });
     } catch (e) {
       console.error(e);
     }
@@ -94,13 +96,13 @@ async function doProgam() {
 }
 
 window.addEventListener("load", () => {
-  espTool = new EspLoader({
+  /*espTool = new EspLoader({
     updateProgress: console.log,
     logMsg: termWrite,
     debugMsg: console.log,
     debug: console.log,
     monitor: termWrite,
-  });
+  });*/
   termInit("terminal");
   document.getElementById("btnConnect")!.addEventListener("click", doConnect);
   // document.getElementById("btnErase")!.addEventListener("click", doErase);
