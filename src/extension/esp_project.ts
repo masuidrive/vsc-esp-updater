@@ -3,13 +3,18 @@ import * as path from "path";
 
 // Search ESP project path
 export function findESPProjectPath(projectPath: string, depth = 0): string[] {
+  console.log(projectPath);
   const basename = path.basename(projectPath);
   if (
     projectPath === "" ||
     projectPath === "/" ||
     basename === "node_modules" ||
+    basename === ".git" ||
     depth > 3
   ) {
+    return [];
+  }
+  if (!fs.existsSync(projectPath)) {
     return [];
   }
 
@@ -23,7 +28,9 @@ export function findESPProjectPath(projectPath: string, depth = 0): string[] {
     .map(({ name }) => name);
   let result: string[] = [];
   for (let dir of dirs) {
-    result = result.concat(findESPProjectPath(dir, depth + 1));
+    result = result.concat(
+      findESPProjectPath(path.join(projectPath, dir), depth + 1)
+    );
   }
   return result;
 }
