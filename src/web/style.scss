@@ -1,7 +1,7 @@
 @import "../../node_modules/bootstrap/scss/bootstrap";
 @import "../../node_modules/xterm/css/xterm";
 
-$top-nav: 64px;
+$top-nav: 56px;
 
 html, body {
   background-color: white;
@@ -11,24 +11,10 @@ html, body {
   overscroll-behavior: none;
 }
 
-#top-nav {
-  height: $top-nav;
-
-  .esp-brand {
-    font-size: 1.25rem;
-    line-height: 1.25rem;
-    font-weight: bold;
-  }
-  
-    .progress {
-    width: 256px;
-  }
-}
-
 #terminal-wrap {
   position: absolute;
   left: 0;
-  top: 64px;
+  top: $top-nav;
   border: 0;
   width: 100%;
   height: calc(100vh - $top-nav);
