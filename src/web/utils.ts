@@ -7,6 +7,10 @@ export function arrayBufferToString(buffer: ArrayBuffer): string {
   return result;
 }
 
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function _arrayBufferToString(buffer: ArrayBuffer): string {
   let tmp = [];
   const len = 1024;

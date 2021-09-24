@@ -85,6 +85,11 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
+"@toit/esptool.js@^0.10.1":
+  version "0.10.1"
+  resolved "https://registry.yarnpkg.com/@toit/esptool.js/-/esptool.js-0.10.1.tgz#c9fcff304f8b9ba0ddae96a839b49ac417427964"
+  integrity sha512-bwiYWjWejGOzEs1BqhReBqv2rs+m1Zc8MIn2Nm50ABTa0V7zsNuWs0wqc3v35ZYUFdlgz9iOanmCwsnesAssuw==
+
 "@tootallnate/once@1":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"

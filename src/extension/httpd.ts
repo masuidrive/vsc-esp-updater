@@ -16,7 +16,7 @@ export function isUpdaterRunning(): boolean {
   return httpd !== null;
 }
 
-function getAddresses(projectPath: string): [string] | undefined {
+function getFiles(projectPath: string): any | undefined {
   try {
     const flasherArgs = JSON.parse(
       fs.readFileSync(
@@ -24,9 +24,17 @@ function getAddresses(projectPath: string): [string] | undefined {
         "utf8"
       )
     );
-    return Object.keys(flasherArgs["flash_files"]).map((addr) =>
-      addr.replace("0x", "")
-    ) as [string];
+
+    const files = [];
+    for (let addr in flasherArgs["flash_files"]) {
+      const filename = flasherArgs["flash_files"][addr] as string;
+      files.push({
+        address: addr.replace("0x", ""),
+        size: fs.statSync(path.join(projectPath, "build", filename)).size,
+      });
+    }
+
+    return files;
   } catch (e) {
     return undefined;
   }
@@ -97,7 +105,7 @@ export function startUpdater(projectPath: string): Promise<boolean> {
           res.write(
             JSON.stringify({
               project_name: getProjectName(projectPath),
-              addresses: getAddresses(projectPath),
+              files: getFiles(projectPath),
               chip: getChipName(projectPath),
             })
           );
