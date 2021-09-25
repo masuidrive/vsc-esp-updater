@@ -1,21 +1,25 @@
 import { termInit, termClear, termWrite, termWriteln, term } from "./terminal";
 import { sleep, showEl, hideEl } from "./utils";
-import "./style.scss";
 import { EspLoader } from "@toit/esptool.js";
 import { Modal } from "bootstrap";
+import "./style.scss";
 
-export type Partition = {
-  name: string;
-  data: Uint8Array;
-  offset: number;
-};
-let progressEl: HTMLElement | undefined;
-let navDisconnectedEl: HTMLElement | undefined;
 let navConnectedEl: HTMLElement | undefined;
-let navUpdatingEl: HTMLElement | undefined;
+let navWriteEl: HTMLElement | undefined;
+let navSwitchDeviceEl: HTMLElement | undefined;
+
+let modalWrite:Modal | undefined;
+let modalResetingEl: HTMLElement | undefined;
+let modalStubEl: HTMLElement | undefined;
+let modalErrorEl: HTMLElement | undefined;
+let modalErrorMessageEl: HTMLElement | undefined;
+let modalWritingEl: HTMLElement | undefined;
+let modalProgressEl: HTMLElement | undefined;
+let modalSuccessEl: HTMLElement | undefined;
 
 let loader: EspLoader | undefined;
 const baudRate = 115200;
+
 async function doConnect() {
   let port = await navigator.serial.requestPort({
     // filters: [{ usbVendorId: 0x10c4 }],
@@ -84,19 +88,27 @@ async function doWrite() {
 }
 window.addEventListener("load", () => {
   termInit("terminal");
-  /*
-  progressEl = document.getElementById("progress")!;
-  navDisconnectedEl = document.getElementById("navDisconnected")!;
-  navConnectedEl = document.getElementById("navConnected")!;
-  navUpdatingEl = document.getElementById("navWriting")!;
-  */
-  let myModal = new Modal(document.getElementById("myModal")!);
+  
+  navConnectedEl = document.getElementById("navConnect")!;
+  navWriteEl = document.getElementById("navWrite")!;
+  navSwitchDeviceEl = document.getElementById("navSwitchDevice")!;
+  
+  modalWrite = new Modal(document.getElementById("modelWrite")!);
+  modalResetingEl = document.getElementById("modalReseting")!;
+  modalStubEl = document.getElementById("modalStub")!;
+  modalErrorEl = document.getElementById("modalError")!;
+  modalErrorMessageEl = document.getElementById("modalErrorMessage")!;
+  modalWritingEl = document.getElementById("modalWriting")!;
+  modalProgressEl = document.getElementById("modalProgress")!;
+  modalSuccessEl = document.getElementById("modalSuccess")!;
+  
   document.getElementById("btnConnect")!.addEventListener("click", () => {
-    myModal.show();
+    modalWrite.show();
   });
   document.getElementById("btnWrite")!.addEventListener("click", () => {});
-  document.getElementById("btnCancel")!.addEventListener("click", () => {});
-  // document.getElementById("btnDisconnect")!.addEventListener("click", () => {});
+  document.getElementById("btnSwitchDevice")!.addEventListener("click", () => {});
+  document.getElementById("modalBtnCancel")!.addEventListener("click", () => {});
+  document.getElementById("modalBtnClose")!.addEventListener("click", () => {});
   /*
   showEl(navDisconnectedEl!);
   hideEl(navConnectedEl!);
