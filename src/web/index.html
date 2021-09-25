@@ -16,16 +16,22 @@
           <span class="navbar-brand mb-0 h1">ESP Writer</span>
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li id="navConnect" class="nav-item">
-              <button id="btnConnect" type="button" class="btn btn-primary me-3">Connect to a ESP device</button>
+              <button id="btnConnect" type="button" class="btn btn-primary me-3">
+                <i class="fas fa-link"></i>
+                Connect to a ESP device
+              </button>
             </li>
 
             <li id="navWrite" class="nav-item">
-              <button id="btnWrite" type="button" class="btn btn-primary me-3">Write</button>
+              <button id="btnWrite" type="button" class="btn btn-primary me-3">
+                <i class="fas fa-upload"></i>
+                Write
+              </button>
             </li>
           </ul>
           <form id="navSwitchDevice" class="d-flex">
             <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-            <button id="modalBtnSwitchDevice" class="btn btn-outline-success" type="submit">Search</button>
+            <button id="btnSwitchDevice" class="btn btn-outline-success" type="submit">Search</button>
           </form>
         </div>
       </div>
@@ -43,37 +49,40 @@
           <div class="modal-body">
             <div id="modalReseting">
               <div class="d-flex align-items-center">
-                <div class="spinner-border me-2" role="status" aria-hidden="true"></div>
+                <div class="spinner-border me-2 text-info" role="status" aria-hidden="true"></div>
                 Reseting and changing boot mode...
               </div>
             </div>
             <div id="modalStub">
               <div class="d-flex align-items-center">
-                <div class="spinner-border me-2" role="status" aria-hidden="true"></div>
+                <div class="spinner-border me-2 text-success" role="status" aria-hidden="true"></div>
                 Setting up stub...
               </div>
             </div>
-            <p id="modalError" class="text-danger">
-              <i class="fas fa-exclamation-triangle"></i>
-              <span id="modalErrorMessage">
-                It's error message.
-              </span>
-            </p>
+
             <div id="modalWriting">
               Writing image files...
               <div class="progress">
-                <div id="modalProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width: 50%"></div>
+                <div id="modalProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0"></div>
               </div>
             </div>
             <div id="modalSuccess">
               Finished to write images.
+            </div>
+            <div id="modalError">
+              <div class="d-flex align-items-center text-danger mt-3">
+                <i class="fas fa-exclamation-triangle fa-2x me-2"></i>
+                <span id="modalErrorMessage">
+                  It's error message.
+                </span>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
             <button id="modalBtnClose" type="button" class="btn btn-primary" data-bs-dismiss="modal">
               Close
             </button>
-            <button type="modalBtnCancel" class="btn btn-outline-danger">
+            <button id="modalBtnCancel" type="button" class="btn btn-outline-danger">
               Cancel
             </button>
           </div>

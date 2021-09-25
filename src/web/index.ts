@@ -4,11 +4,11 @@ import { EspLoader } from "@toit/esptool.js";
 import { Modal } from "bootstrap";
 import "./style.scss";
 
-let navConnectedEl: HTMLElement | undefined;
+let navConnectEl: HTMLElement | undefined;
 let navWriteEl: HTMLElement | undefined;
 let navSwitchDeviceEl: HTMLElement | undefined;
 
-let modalWrite:Modal | undefined;
+let modalWrite: Modal | undefined;
 let modalResetingEl: HTMLElement | undefined;
 let modalStubEl: HTMLElement | undefined;
 let modalErrorEl: HTMLElement | undefined;
@@ -16,35 +16,48 @@ let modalErrorMessageEl: HTMLElement | undefined;
 let modalWritingEl: HTMLElement | undefined;
 let modalProgressEl: HTMLElement | undefined;
 let modalSuccessEl: HTMLElement | undefined;
+let modalBtnCancelEl: HTMLElement | undefined;
+let modalBtnCloseEl: HTMLElement | undefined;
 
+let port: SerialPort | undefined;
 let loader: EspLoader | undefined;
 const baudRate = 115200;
 
 async function doConnect() {
-  let port = await navigator.serial.requestPort({
+  port = await navigator.serial.requestPort({
     // filters: [{ usbVendorId: 0x10c4 }],
   });
   await port.open({ baudRate: baudRate });
-
-  loader = new EspLoader(port, { debug: true, logger: console });
-  await loader.connect();
-
-  try {
-    await loader.sync();
-
-    const chipName = await loader.chipName();
-    const macAddr = await loader.macAddr();
-    await loader.loadStub();
-    await loader.setBaudRate(baudRate, 921600);
-  } finally {
-  }
-
-  return true;
+  hideEl(navConnectEl!);
+  showEl(navWriteEl!);
 }
+
 async function doWrite() {
-  hideEl(navConnectedEl!);
-  showEl(navUpdatingEl!);
+  hideEl(modalResetingEl!);
+  hideEl(modalStubEl!);
+  hideEl(modalErrorEl!);
+  hideEl(modalWritingEl!);
+  hideEl(modalSuccessEl!);
+  showEl(modalBtnCancelEl!);
+  hideEl(modalBtnCloseEl!);
+
+  modalWrite!.show();
   try {
+    loader = new EspLoader(port!, { debug: false, logger: console });
+
+    showEl(modalResetingEl!);
+    await loader!.connect();
+    await loader!.sync();
+    hideEl(modalResetingEl!);
+
+    showEl(modalStubEl!);
+    const chipName = await loader!.chipName();
+    const macAddr = await loader!.macAddr();
+    await loader!.loadStub();
+    await loader!.setBaudRate(baudRate, 921600);
+    hideEl(modalStubEl!);
+
+    showEl(modalWritingEl!);
     let project = await (
       await fetch("project.json", {
         cache: "no-cache",
@@ -74,26 +87,40 @@ async function doWrite() {
           const progress = Math.floor(
             (100 * (wroteSize + (fileSize * idx) / cnt)) / totalSize
           );
-          console.info("progress", progress);
-          progressEl!.style.width = `${progress}%`;
+          modalProgressEl!.style.width = `${progress}%`;
         }
       );
       wroteSize += fileSize;
       await sleep(100);
     }
+    hideEl(modalWritingEl!);
+    showEl(modalSuccessEl!);
+  } catch (err) {
+    if (typeof err === "string") {
+      modalErrorMessageEl!.innerText = err as string;
+    } else if (err instanceof Error) {
+      modalErrorMessageEl!.innerText = err.message;
+    } else {
+      modalErrorMessageEl!.innerText = "Unknown error";
+    }
+    showEl(modalErrorEl!);
   } finally {
-    hideEl(navUpdatingEl!);
-    showEl(navConnectedEl!);
+    hideEl(modalBtnCancelEl!);
+    showEl(modalBtnCloseEl!);
   }
 }
+
+async function doModalCancel() {}
 window.addEventListener("load", () => {
   termInit("terminal");
-  
-  navConnectedEl = document.getElementById("navConnect")!;
+
+  navConnectEl = document.getElementById("navConnect")!;
   navWriteEl = document.getElementById("navWrite")!;
   navSwitchDeviceEl = document.getElementById("navSwitchDevice")!;
-  
-  modalWrite = new Modal(document.getElementById("modelWrite")!);
+
+  hideEl(navWriteEl!);
+
+  modalWrite = new Modal(document.getElementById("modalWrite")!);
   modalResetingEl = document.getElementById("modalReseting")!;
   modalStubEl = document.getElementById("modalStub")!;
   modalErrorEl = document.getElementById("modalError")!;
@@ -101,14 +128,25 @@ window.addEventListener("load", () => {
   modalWritingEl = document.getElementById("modalWriting")!;
   modalProgressEl = document.getElementById("modalProgress")!;
   modalSuccessEl = document.getElementById("modalSuccess")!;
-  
+
+  modalBtnCancelEl = document.getElementById("modalBtnCancel")!;
+  modalBtnCloseEl = document.getElementById("modalBtnClose")!;
+
   document.getElementById("btnConnect")!.addEventListener("click", () => {
-    modalWrite.show();
+    doConnect();
   });
-  document.getElementById("btnWrite")!.addEventListener("click", () => {});
-  document.getElementById("btnSwitchDevice")!.addEventListener("click", () => {});
-  document.getElementById("modalBtnCancel")!.addEventListener("click", () => {});
-  document.getElementById("modalBtnClose")!.addEventListener("click", () => {});
+  document.getElementById("btnWrite")!.addEventListener("click", () => {
+    doWrite();
+  });
+  document.getElementById("btnSwitchDevice")!.addEventListener("click", () => {
+    //
+  });
+  document.getElementById("modalBtnCancel")!.addEventListener("click", () => {
+    doModalCancel();
+  });
+  document.getElementById("modalBtnClose")!.addEventListener("click", () => {
+    //
+  });
   /*
   showEl(navDisconnectedEl!);
   hideEl(navConnectedEl!);
