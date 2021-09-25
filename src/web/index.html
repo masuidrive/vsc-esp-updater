@@ -46,12 +46,24 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Write built image
-              file to ESP device.
+              to ESP device
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <p>Modal body text goes here.</p>
+            <div id="modalReseting">
+              <div class="d-flex align-items-center">
+                <div class="spinner-border me-1" role="status" aria-hidden="true"></div>
+                Reseting and changing boot mode...
+              </div>
+
+            </div>
+            <div id="modalWriting">
+              Writing image files...
+              <div class="progress">
+                <div id="progress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width: 50%"></div>
+              </div>
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
