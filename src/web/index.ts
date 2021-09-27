@@ -27,14 +27,19 @@ async function doConnect() {
   port = await navigator.serial.requestPort({
     // filters: [{ usbVendorId: 0x10c4 }],
   });
+
   port.addEventListener("disconnect", (ev) => {
     termUnlink();
     port = undefined;
     loader?.disconnect();
     loader = undefined;
   });
+
+  port.addEventListener("connect", (ev) => {
+    termLink(port!);
+  });
+
   await port.open({ baudRate: baudRate });
-  termLink(port);
   hideEl(navConnectEl!);
   showEl(navWriteEl!);
 }
@@ -121,7 +126,7 @@ async function doWrite() {
     }
     showEl(modalErrorEl!);
   } finally {
-    loader?.disconnect();
+    await loader?.disconnect();
 
     resetDevice();
     termLink(port!);

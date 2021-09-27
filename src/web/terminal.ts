@@ -28,16 +28,16 @@ async function readLoop() {
   while (port?.readable) {
     try {
       reader = port.readable.getReader();
-      while (reader) {
-        const { value, done } = await reader.read();
-        if (done) {
-          break;
-        }
-        term.write(new TextDecoder().decode(value));
-      }
     } catch (error) {
       console.error(error);
-      // Handle |error|...
+      return;
+    }
+    while (reader) {
+      const { value, done } = await reader.read();
+      if (done) {
+        break;
+      }
+      term.write(new TextDecoder().decode(value));
     }
   }
 }
@@ -57,6 +57,9 @@ function termOnKey(e: { key: string; domEvent: KeyboardEvent }) {
 }
 
 export async function termLink(port_: SerialPort) {
+  if (port === undefined) {
+    await termUnlink();
+  }
   port = port_;
   writer = port!.writable!.getWriter();
 
