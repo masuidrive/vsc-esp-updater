@@ -1,8 +1,13 @@
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
+import { sleep } from "./utils";
 
 export const term = new Terminal({});
 let port: SerialPort | undefined;
+let reader: ReadableStreamDefaultReader | undefined;
+let writer: WritableStreamDefaultWriter | undefined;
+
+let isLocalEcho = false;
 
 export function termInit(selector: string) {
   const fitAddon = new FitAddon();
@@ -11,6 +16,8 @@ export function termInit(selector: string) {
   fitAddon.fit();
 
   window.addEventListener("resize", () => fitAddon.fit());
+
+  term.onKey(termOnKey);
 }
 
 export function termClear() {
@@ -19,9 +26,9 @@ export function termClear() {
 
 async function readLoop() {
   while (port?.readable) {
-    const reader = port.readable.getReader();
     try {
-      while (true) {
+      reader = port.readable.getReader();
+      while (reader) {
         const { value, done } = await reader.read();
         if (done) {
           break;
@@ -29,41 +36,47 @@ async function readLoop() {
         term.write(new TextDecoder().decode(value));
       }
     } catch (error) {
-      console.log("port> 9");
       console.error(error);
       // Handle |error|...
-    } finally {
-      reader?.releaseLock();
     }
   }
 }
 
 const textEnc = new TextEncoder(); // always utf-8
 
-export async function termLink(port_: SerialPort) {
-  port = port_;
-  readLoop();
-
-  while (port?.writable) {
-    const writer = port!.writable.getWriter();
-    try {
-
-    term.onKey((e) => {
-      const ev = e.domEvent;
-      const printable = !ev.altKey && !ev.ctrlKey && !ev.metaKey;
-      writer.write(textEnc.encode(ev.key));
-      /*
-      if (ev.DOM_KEY_LOCATION_STANDARD === 13) {
-        // term.prompt();
-      } else if (ev.key === "\x08") {
-        //if (term._core.buffer.x > 2) {
-        term.write("\b");
-        //}
-      } else if (printable) {
-        term.write(e.key);
-      }*/
-    });
+function termOnKey(e: { key: string; domEvent: KeyboardEvent }) {
+  try {
+    const ev = e.domEvent;
+    writer?.write(textEnc.encode(e.key));
+    if (isLocalEcho) {
+      term.write(e.key);
+    }
+  } catch (e) {
+    console.error(e);
   }
 }
 
-export function termUnlink() {}
+export async function termLink(port_: SerialPort) {
+  port = port_;
+  writer = port!.writable!.getWriter();
+
+  await readLoop();
+}
+
+export async function termUnlink() {
+  try {
+    reader?.cancel();
+    await sleep(1000);
+
+    writer?.releaseLock();
+    reader?.releaseLock();
+    console.log("termUnlink> unlocked.", reader, writer);
+  } catch (e) {
+    console.error(e);
+  } finally {
+    console.log("termUnlink> fin.");
+    port = undefined;
+    writer = undefined;
+    reader = undefined;
+  }
+}

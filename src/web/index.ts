@@ -27,13 +27,28 @@ async function doConnect() {
   port = await navigator.serial.requestPort({
     // filters: [{ usbVendorId: 0x10c4 }],
   });
+  port.addEventListener("disconnect", (ev) => {
+    termUnlink();
+    port = undefined;
+    loader?.disconnect();
+    loader = undefined;
+  });
   await port.open({ baudRate: baudRate });
   termLink(port);
   hideEl(navConnectEl!);
   showEl(navWriteEl!);
 }
 
+async function resetDevice() {
+  await port?.setSignals({ dataTerminalReady: false, requestToSend: true });
+  sleep(100);
+  await port?.setSignals({ dataTerminalReady: true, requestToSend: false });
+  sleep(100);
+}
+
 async function doWrite() {
+  await termUnlink();
+
   hideEl(modalResetingEl!);
   hideEl(modalStubEl!);
   hideEl(modalErrorEl!);
@@ -106,6 +121,11 @@ async function doWrite() {
     }
     showEl(modalErrorEl!);
   } finally {
+    loader?.disconnect();
+
+    resetDevice();
+    termLink(port!);
+
     hideEl(modalBtnCancelEl!);
     showEl(modalBtnCloseEl!);
   }
@@ -120,6 +140,7 @@ window.addEventListener("load", () => {
   navSwitchDeviceEl = document.getElementById("navSwitchDevice")!;
 
   hideEl(navWriteEl!);
+  hideEl(navSwitchDeviceEl!);
 
   modalWrite = new Modal(document.getElementById("modalWrite")!);
   modalResetingEl = document.getElementById("modalReseting")!;
@@ -138,6 +159,9 @@ window.addEventListener("load", () => {
   });
   document.getElementById("btnWrite")!.addEventListener("click", () => {
     doWrite();
+  });
+  document.getElementById("btnClear")!.addEventListener("click", () => {
+    term?.clear();
   });
   document.getElementById("btnSwitchDevice")!.addEventListener("click", () => {
     //
