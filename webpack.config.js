@@ -49,13 +49,13 @@ const web_config = {
   mode: 'production',
 
   context: path.resolve(__dirname, 'src', 'web'),
-  entry: './index.ts',
+  entry: './index.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
   },
   resolve: {
     // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
-    extensions: ['.ts', '.js', '.scss']
+    extensions: ['.ts', '.tsx', '.js', '.scss']
   },
   plugins: [
     new HTMLWebpackPlugin({
@@ -68,7 +68,7 @@ const web_config = {
   module: {
     rules: [
       {
-        test: /\.ts$/,
+        test: /\.(ts|tsx)$/,
         exclude: /node_modules/,
         use: [
           {
@@ -104,7 +104,11 @@ const web_config = {
         ],
       },
     ],
-},
+  },
+  devServer: {
+    contentBase: "./dist",
+    hot: true,
+  },
 };
 
 module.exports = [
