@@ -1,4 +1,4 @@
-import { termInit, termClear, termWrite, termWriteln, term } from "./terminal";
+import { termInit, termClear, termLink, termUnlink, term } from "./terminal";
 import { sleep, showEl, hideEl } from "./utils";
 import { EspLoader } from "@toit/esptool.js";
 import { Modal } from "bootstrap";
@@ -28,6 +28,7 @@ async function doConnect() {
     // filters: [{ usbVendorId: 0x10c4 }],
   });
   await port.open({ baudRate: baudRate });
+  termLink(port);
   hideEl(navConnectEl!);
   showEl(navWriteEl!);
 }
