@@ -2,17 +2,18 @@ import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import { sleep } from "./utils";
 
-export const term = new Terminal({});
+export let term!: Terminal;
 let port: SerialPort | undefined;
 let reader: ReadableStreamDefaultReader | undefined;
 let writer: WritableStreamDefaultWriter | undefined;
 
 let isLocalEcho = false;
 
-export function termInit(selector: string) {
+export function termInit(terminal: Terminal) {
+  term = terminal;
+
   const fitAddon = new FitAddon();
   term.loadAddon(fitAddon);
-  term.open(document.getElementById(selector)!);
   fitAddon.fit();
 
   window.addEventListener("resize", () => fitAddon.fit());
@@ -32,7 +33,7 @@ async function readLoop() {
       console.error(error);
       return;
     }
-    while (reader) {
+    while (reader && port) {
       const { value, done } = await reader.read();
       if (done) {
         break;
@@ -69,10 +70,11 @@ export async function termLink(port_: SerialPort) {
 export async function termUnlink() {
   try {
     reader?.cancel();
-    await sleep(1000);
+    await sleep(100);
 
     writer?.releaseLock();
     reader?.releaseLock();
+    await sleep(100);
     console.log("termUnlink> unlocked.", reader, writer);
   } catch (e) {
     console.error(e);

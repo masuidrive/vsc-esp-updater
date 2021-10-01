@@ -6,6 +6,7 @@ import "./style.scss";
 
 import * as React from 'react';
 import { render } from 'react-dom';
+import { App } from './app';
 
 let navConnectEl: HTMLElement | undefined;
 let navWriteEl: HTMLElement | undefined;
@@ -53,6 +54,7 @@ async function resetDevice() {
   await port?.setSignals({ dataTerminalReady: true, requestToSend: false });
   sleep(100);
 }
+
 
 async function doWrite() {
   await termUnlink();
@@ -141,9 +143,9 @@ async function doWrite() {
 
 async function doModalCancel() {}
 window.addEventListener("load", () => {
-  termInit("terminal");
-  console.log(<div>a</div>);
-
+//  termInit("terminal");
+  render(<App/>, document.getElementById('app'));
+/*
   navConnectEl = document.getElementById("navConnect")!;
   navWriteEl = document.getElementById("navWrite")!;
   navSwitchDeviceEl = document.getElementById("navSwitchDevice")!;

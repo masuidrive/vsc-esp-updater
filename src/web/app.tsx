@@ -1,94 +1,301 @@
 import * as React from 'react';
+import { XTerm } from 'xterm-for-react';
+import { termInit, termClear, termLink, termUnlink, term } from "./terminal";
+import Modal from 'react-bootstrap/Modal';
+import { sleep } from "./utils";
+import { EspLoader } from '@toit/esptool.js';
 
-export const App = () => {
-  return (
-  <><nav className="navbar navbar-expand-lg navbar-light bg-light">
-  <div className="container-fluid">
+interface Props {}
 
-    <div className="collapse navbar-collapse">
-      <span className="navbar-brand mb-0 h1">ESP Writer</span>
-      <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-        <li id="navConnect" className="nav-item">
-          <button id="btnConnect" type="button" className="btn btn-primary me-3">
-            <i className="fas fa-link"></i>
-            Connect to a ESP device
-          </button>
-        </li>
+const enum Progress {
+  none = 0,
+  resetting = 1,
+  setting = 2,
+  writing = 3,
+  error = -1,
+  done = 9,
+}
 
-        <li id="navWrite" className="nav-item">
-          <button id="btnWrite" type="button" className="btn btn-primary me-3">
-            <i className="fas fa-upload"></i>
+interface State {
+  port?: SerialPort;
+  progress: Progress;
+  loader?: EspLoader;
+  writeProgress: number;
+  writeErrorMessage: string;
+}
+
+export class App extends React.Component<Props, State> {
+  private xtermRef = React.createRef<XTerm>();
+  private baudRate = 115200;
+  private uploadBaudRate = 921600;
+  private loader?:EspLoader;
+
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      port: undefined,
+      progress: Progress.none,
+      writeProgress: 0,
+      writeErrorMessage: '',
+      loader: undefined,
+    };
+
+    this.handleCancelWritingFiles = this.handleCancelWritingFiles.bind(this);
+    this.handleCloseWriteModal = this.handleCloseWriteModal.bind(this);
+    this.handleResetDevice = this.handleResetDevice.bind(this);
+    this.handleSerialConnect = this.handleSerialConnect.bind(this);
+    this.serialDidDisconnect = this.serialDidDisconnect.bind(this);
+    this.handleWriteFiles = this.handleWriteFiles.bind(this);
+    this.handleCloseWriteModal = this.handleCloseWriteModal.bind(this);
+  }
+
+  componentDidMount() {
+    termInit(this.xtermRef.current!.terminal);
+  }
+
+  async handleSerialConnect() {
+    try {
+      let newPort = await navigator.serial.requestPort({});
+      this.setState({port: newPort});
+
+      newPort.ondisconnect = this.serialDidDisconnect;
+
+      await newPort.open({ baudRate: this.baudRate });
+      termLink(this.state.port!);
+      await sleep(100);
+      await this.handleResetDevice();
+    }
+    catch(e) {
+      console.error(e);
+    }
+  }
+
+  async serialDidDisconnect(ev:Event) {
+    termUnlink();
+    this.setState({port: undefined});
+    // loader?.disconnect();
+    // loader = undefined;
+  }
+
+  async handleCancelWritingFiles() {
+    await this.loader?.setBaudRate(this.uploadBaudRate, this.baudRate);
+    await this.loader?.disconnect();
+    this.loader = undefined;
+
+    await this.handleResetDevice();
+    await termLink(this.state.port!);
+    this.setState({ progress: Progress.none });
+  }
+
+  async handleWriteFiles() {
+    if(this.loader) {
+      return;
+    }
+
+    await termUnlink();
+    this.loader = new EspLoader(this.state.port!, { debug: false, logger: console });
+    try {
+
+      this.setState({progress: Progress.resetting});
+      await this.loader!.connect();
+      await this.loader!.sync();
+
+      this.setState({progress: Progress.setting});
+      const chipName = await this.loader!.chipName();
+      const macAddr = await this.loader!.macAddr();
+      await this.loader!.loadStub();
+      await this.loader!.setBaudRate(this.baudRate, this.uploadBaudRate);
+
+      this.setState({progress: Progress.writing});
+      let project = await (
+        await fetch("project.json", {
+          cache: "no-cache",
+        })
+      ).json();
+
+      const totalSize = project["files"].reduce(
+        (a: any, b: any) => a + b.size,
+        0
+      ) as number;
+
+      let wroteSize = 0;
+      for (let i in project["files"]) {
+        let file = project["files"][i];
+        const fileSize = file["size"];
+
+        let url = `data/${file["address"]}.bin`;
+        let contents = await (
+          await fetch(url, {
+            cache: "no-cache",
+          })
+        ).arrayBuffer();
+        await this.loader!.flashData(
+          new Uint8Array(contents),
+          parseInt(file["address"], 16),
+          (idx, cnt) => {
+            const writeProgress = Math.floor(
+              (100 * (wroteSize + (fileSize * idx) / cnt)) / totalSize
+            );
+            this.setState({writeProgress});
+          }
+        );
+        wroteSize += fileSize;
+        await sleep(100);
+      }
+      this.setState({progress: Progress.done});
+    } catch (err) {
+      if (typeof err === "string") {
+        this.setState({writeErrorMessage: err as string});
+      } else if (err instanceof Error) {
+        this.setState({writeErrorMessage: err.message});
+      } else {
+        this.setState({writeErrorMessage: "Unknown error"});
+      }
+      this.setState({progress: Progress.error});
+    } finally {
+      await this.loader?.setBaudRate(this.uploadBaudRate, this.baudRate);
+      await this.loader?.disconnect();
+      this.loader = undefined;
+
+      await this.handleResetDevice();
+      await termLink(this.state.port!);
+
+      //hideEl(modalBtnCancelEl!);
+      //showEl(modalBtnCloseEl!);
+    }
+  }
+
+  async handleResetDevice() {
+    await this.state.port?.setSignals({ dataTerminalReady: false, requestToSend: true });
+    sleep(100);
+    await this.state.port?.setSignals({ dataTerminalReady: false, requestToSend: false });
+    sleep(100);
+  }
+
+  handleCloseWriteModal() {
+    this.setState({progress: Progress.none});
+  }
+
+  render() {
+    const navBarLeft = this.state.port ? (
+      <>
+        <li className="nav-item">
+          <button className="btn btn-primary me-3" onClick={this.handleWriteFiles}>
+            <i className="fas fa-upload me-2"></i>
             Write
           </button>
         </li>
-      </ul>
-      <form id="navSwitchDevice" className="d-flex">
-        <button id="btnSwitchDevice" className="btn btn-outline-success" type="submit">Search</button>
-      </form>
-    </div>
-  </div>
-</nav>
+        <li className="nav-item">
+          <button className="btn btn-outline-secondary me-3" onClick={this.handleResetDevice}>
+            <i className="fas fa-redo me-2"></i>
+            Reset device
+          </button>
+        </li>
+        <li className="nav-item">
+          <button className="btn btn-outline-secondary me-3" onClick={termClear}>
+            <i className="fas fa-chalkboard me-2"></i>
+            Clear terminal
+          </button>
+        </li>
+      </>
+    ) : (
+      <li className="nav-item">
+        <button onClick={this.handleSerialConnect} className="btn btn-primary me-3">
+          <i className="fas fa-link me-2"></i>
+          Connect to a ESP device
+        </button>
+      </li>
+    );
 
-<div id="modalWrite" className="modal" tabIndex={-1}>
-  <div className="modal-dialog">
-    <div className="modal-content">
-      <div className="modal-header">
-        <h5 className="modal-title">
-          Write built image to ESP device
-        </h5>
-        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div className="modal-body">
-        <div id="modalReseting">
+    const navBarRight = this.state.port ? (
+      <div id="navSwitchDevice" className="d-flex">
+      <button className="btn btn-outline-success" onClick={this.handleSerialConnect}>Switch port</button>
+    </div>
+    ) : (<></>);
+
+    let progressEl = <></>;
+    switch(this.state.progress) {
+      case Progress.resetting:
+        progressEl = (
           <div className="d-flex align-items-center">
             <div className="spinner-border me-2 text-info" role="status" aria-hidden="true"></div>
             Reseting and changing boot mode...
           </div>
-        </div>
-        <div id="modalStub">
+        );
+        break;
+      case Progress.setting:
+        progressEl = (
           <div className="d-flex align-items-center">
             <div className="spinner-border me-2 text-success" role="status" aria-hidden="true"></div>
             Setting up stub...
           </div>
-        </div>
-
-        <div id="modalWriting">
-          Writing image files...
-          <div className="progress">
-            <div id="modalProgress" className="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow={0} aria-valuemin={0} aria-valuemax={100} style={{width: 0}}></div>
+        );
+        break;
+      case Progress.writing:
+        progressEl = (
+          <div>
+            Writing image files...
+            <div className="progress">
+              <div id="modalProgress" className="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow={0} aria-valuemin={0} aria-valuemax={this.state.writeProgress} style={{width: `${this.state.writeProgress}%`}}></div>
+            </div>
           </div>
-        </div>
-        <div id="modalSuccess">
-          Finished to write images.
-        </div>
-        <div id="modalError">
+        );
+        break;
+      case Progress.done:
+        progressEl = (
+          <div>
+            Finished to write images.
+          </div>
+        );
+        break;
+      case Progress.error:
+        progressEl = (
           <div className="d-flex align-items-center text-danger mt-3">
             <i className="fas fa-exclamation-triangle fa-2x me-2"></i>
             <span id="modalErrorMessage">
-              It's error message.
+              { this.state.writeErrorMessage }
             </span>
           </div>
+        );
+        break;
+      }
+
+    return (<>
+      <nav className="navbar navbar-expand-lg navbar-light bg-light">
+        <div className="container-fluid">
+          <div className="collapse navbar-collapse">
+            <span className="navbar-brand mb-0 h1">ESP Writer</span>
+            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+              { navBarLeft }
+            </ul>
+            { navBarRight }
+          </div>
         </div>
+      </nav>
+
+      <Modal show={this.state.progress !== Progress.none} onHide={this.handleCloseWriteModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Write built image to ESP device</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          { progressEl }
+        </Modal.Body>
+        <Modal.Footer>
+          { this.state.progress === Progress.done ? (
+            <button onClick={this.handleCloseWriteModal} className="btn btn-primary">
+              Close
+            </button>
+          ) : (
+            <button onClick={this.handleCancelWritingFiles} className="btn btn-outline-danger">
+              Cancel
+              </button>
+          ) }
+        </Modal.Footer>
+      </Modal>
+      <div id="terminal-wrap">
+        <XTerm ref={this.xtermRef}/>
       </div>
-      <div className="modal-footer">
-        <button id="modalBtnClose" type="button" className="btn btn-primary" data-bs-dismiss="modal">
-          Close
-        </button>
-        <button id="modalBtnCancel" type="button" className="btn btn-outline-danger">
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-<div id="terminal-wrap">
-  <div id="terminal"></div>
-  <div id="local-echo-panel" className="d-flex bd-highlight align-items-center p-1">
-    <input id="checkLocalEcho" className="form-check-input me-2 ms-2" type="checkbox" value=""/>
-    <label className="form-check-label" for="check-local-echo">
-      Local echo
-    </label>
-    <button id="btnClear" type="button" className="btn btn-outline-light btn-clear ms-3 me-1">Clear</button>
-  </div>
-</div></>);
-};
+    </>);
+  }
+}

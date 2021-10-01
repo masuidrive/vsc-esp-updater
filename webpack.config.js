@@ -46,7 +46,8 @@ const ext_config = {
 };
 
 const web_config = {
-  mode: 'production',
+  // mode: 'production',
+  mode: 'development',
 
   context: path.resolve(__dirname, 'src', 'web'),
   entry: './index.tsx',
