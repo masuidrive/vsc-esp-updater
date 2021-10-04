@@ -75,11 +75,9 @@ export async function termUnlink() {
     writer?.releaseLock();
     reader?.releaseLock();
     await sleep(100);
-    console.log("termUnlink> unlocked.", reader, writer);
   } catch (e) {
     console.error(e);
   } finally {
-    console.log("termUnlink> fin.");
     port = undefined;
     writer = undefined;
     reader = undefined;

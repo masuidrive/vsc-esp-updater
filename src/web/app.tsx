@@ -160,9 +160,6 @@ export class App extends React.Component<Props, State> {
 
       await this.handleResetDevice();
       await termLink(this.state.port!);
-
-      //hideEl(modalBtnCancelEl!);
-      //showEl(modalBtnCloseEl!);
     }
   }
 
@@ -209,9 +206,9 @@ export class App extends React.Component<Props, State> {
     );
 
     const navBarRight = this.state.port ? (
-      <div id="navSwitchDevice" className="d-flex">
-      <button className="btn btn-outline-success" onClick={this.handleSerialConnect}>Switch port</button>
-    </div>
+      <li className="nav-item">
+        <button className="btn btn-outline-success" onClick={this.handleSerialConnect}>Switch port</button>
+      </li>
     ) : (<></>);
 
     let progressEl = <></>;
@@ -261,41 +258,43 @@ export class App extends React.Component<Props, State> {
         break;
       }
 
-    return (<>
-      <nav className="navbar navbar-expand-lg navbar-light bg-light">
-        <div className="container-fluid">
-          <div className="collapse navbar-collapse">
-            <span className="navbar-brand mb-0 h1">ESP Writer</span>
-            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-              { navBarLeft }
-            </ul>
+    return (
+      <div className="container-fluid">
+        <nav className="navbar navbar-expand navbar-light bg-light">
+          <span className="navbar-brand mb-0 h1">ESP Writer</span>
+          <ul className="navbar-nav me-auto">
+            { navBarLeft }
+          </ul>
+          <ul className="navbar-nav">　
             { navBarRight }
-          </div>
-        </div>
-      </nav>
+          </ul>
+        </nav>
 
-      <Modal show={this.state.progress !== Progress.none} onHide={this.handleCloseWriteModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Write built image to ESP device</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          { progressEl }
-        </Modal.Body>
-        <Modal.Footer>
-          { this.state.progress === Progress.done ? (
-            <button onClick={this.handleCloseWriteModal} className="btn btn-primary">
-              Close
-            </button>
-          ) : (
-            <button onClick={this.handleCancelWritingFiles} className="btn btn-outline-danger">
-              Cancel
+        <Modal show={this.state.progress !== Progress.none} onHide={this.handleCloseWriteModal}>
+          <Modal.Header closeButton>
+            <Modal.Title>Write built image to ESP device</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            { progressEl }
+          </Modal.Body>
+          <Modal.Footer>
+            { this.state.progress === Progress.done ? (
+              <button onClick={this.handleCloseWriteModal} className="btn btn-primary">
+                Close
               </button>
-          ) }
-        </Modal.Footer>
-      </Modal>
-      <div id="terminal-wrap">
-        <XTerm ref={this.xtermRef}/>
+            ) : (
+              <button onClick={this.handleCancelWritingFiles} className="btn btn-outline-danger">
+                Cancel
+              </button>
+            ) }
+          </Modal.Footer>
+        </Modal>
+
+        <div id="terminal-wrap">
+          <XTerm ref={this.xtermRef}/>
+        </div>
+
       </div>
-    </>);
+    );
   }
 }

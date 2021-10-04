@@ -4,9 +4,6 @@ import * as React from 'react';
 import { render } from 'react-dom';
 import { App } from './app';
 
-
-// navigator.serial.requestPort({
-
 const AppWrap = () => {
   const supportSerial = navigator.serial !== undefined;
   if(supportSerial) {
@@ -29,6 +26,5 @@ const AppWrap = () => {
 
 window.addEventListener("load", () => {
   render(<AppWrap/>, document.getElementById('app'));
-
 });
 
