@@ -2,4 +2,4 @@
 
 ## Features
 
-Upload built bin files to your ESP device througt serial port.
+Upload built bin files to your ESP device througt Web Serial.

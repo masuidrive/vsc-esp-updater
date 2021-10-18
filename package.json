@@ -1,9 +1,9 @@
 {
 	"name": "vsc-esp-updater",
 	"displayName": "ESP Updater",
-	"description": "",
+	"description": "ESP update and monitor tool on Web Serial (Chrome)",
 	"publisher": "masuidrive",
-	"version": "0.0.4",
+	"version": "0.0.7",
 	"engines": {
 		"vscode": "^1.60.0"
 	},
@@ -32,12 +32,8 @@
 		"vscode:prepublish": "yarn run package",
 		"compile": "webpack",
 		"watch": "webpack --watch --progress",
-		"package": "webpack --mode production --devtool hidden-source-map",
-		"test-compile": "tsc -p ./",
-		"test-watch": "tsc -watch -p ./",
-		"pretest": "yarn run test-compile && yarn run lint",
-		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js"
+		"package": "webpack --mode production --devtool hidden-source-map && vsce package"
+
 	},
 	"devDependencies": {
 		"@babel/core": "^7.15.5",

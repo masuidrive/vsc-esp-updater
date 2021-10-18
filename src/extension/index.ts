@@ -31,7 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
       const folders =
         vscode.workspace.workspaceFolders?.map((folder) => folder.uri.path) ??
         [];
-console.error("folders",folders);
+      console.error("folders", folders);
       let projectsPath: string[] = [];
       for (let folder of folders) {
         projectsPath = projectsPath.concat(findESPProjectPath(folder));
@@ -58,6 +58,7 @@ console.error("folders",folders);
       }
 
       // open ESP Updater on your browser
+      await delay(1000);
       vscode.env.openExternal(
         vscode.Uri.parse(`http://localhost:${updaterPort()}`)
       );

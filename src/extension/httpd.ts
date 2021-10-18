@@ -100,6 +100,10 @@ export function startUpdater(projectPath: string): Promise<boolean> {
           res.writeHead(200, { "Content-Type": "text/html" });
           res.write(fs.readFileSync(path.resolve(__dirname, "index.html")));
           res.end();
+        } else if (req.url === "/worker.js") {
+          res.writeHead(200, { "Content-Type": "text/html" });
+          res.write(fs.readFileSync(path.resolve(__dirname, "worker.js")));
+          res.end();
         } else if (req.url === "/project.json") {
           res.writeHead(200, { "Content-Type": "application/json" });
           res.write(

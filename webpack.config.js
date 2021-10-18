@@ -6,7 +6,6 @@ const path = require('path');
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 const HTMLInlineScriptPlugin = require('html-inline-script-webpack-plugin');
 
-/**@type {import('webpack').Configuration}*/
 const ext_config = {
   target: 'node', // vscode extensions run in a Node.js-context 📖 -> https://webpack.js.org/configuration/node/
 	mode: 'none', // this leaves the source code as close as possible to the original (when packaging we set this to 'production')
@@ -108,11 +107,47 @@ const web_config = {
   },
   devServer: {
     contentBase: "./dist",
-    hot: true,
   },
 };
+
+
+const worker_config = {
+  mode: 'production',
+  // mode: 'development',
+
+  context: path.resolve(__dirname, 'src', 'web', 'workers'),
+  entry: './index.ts',
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'worker.js',
+  },
+  resolve: {
+    extensions: ['.ts']
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(ts|tsx)$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'ts-loader',
+            options: {
+              configFile: "src/web/tsconfig.json",
+            },
+          }
+        ]
+      },
+    ],
+  },
+  devServer: {
+    contentBase: "./dist",
+  },
+};
+
 
 module.exports = [
   ext_config,
   web_config,
+  worker_config,
 ];

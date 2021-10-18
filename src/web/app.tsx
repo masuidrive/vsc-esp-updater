@@ -5,6 +5,8 @@ import Modal from 'react-bootstrap/Modal';
 import { sleep } from "./utils";
 import { EspLoader } from '@toit/esptool.js';
 
+const worker = new Worker('worker.js');
+
 interface Props {}
 
 const enum Progress {
@@ -74,18 +76,29 @@ export class App extends React.Component<Props, State> {
   async serialDidDisconnect(ev:Event) {
     termUnlink();
     this.setState({port: undefined});
-    // loader?.disconnect();
-    // loader = undefined;
+    this.loader?.disconnect();
+    this.loader = undefined;
   }
 
   async handleCancelWritingFiles() {
-    await this.loader?.setBaudRate(this.uploadBaudRate, this.baudRate);
-    await this.loader?.disconnect();
-    this.loader = undefined;
-
-    await this.handleResetDevice();
-    await termLink(this.state.port!);
-    this.setState({ progress: Progress.none });
+    try {
+      await this.loader?.setBaudRate(this.uploadBaudRate, this.baudRate);
+    }
+    catch(e)  {
+      console.error(e);
+    }
+    try {
+      await this.loader?.disconnect();
+    }
+    catch(e)  {
+      console.error(e);
+    }
+    finally {
+      this.loader = undefined;
+      this.setState({ progress: Progress.none });
+      await this.handleResetDevice();
+      await termLink(this.state.port!);
+    }
   }
 
   async handleWriteFiles() {
@@ -94,6 +107,7 @@ export class App extends React.Component<Props, State> {
     }
 
     await termUnlink();
+
     this.loader = new EspLoader(this.state.port!, { debug: false, logger: console });
     try {
 
@@ -154,6 +168,7 @@ export class App extends React.Component<Props, State> {
       }
       this.setState({progress: Progress.error});
     } finally {
+      this.setState({writeProgress: 0});
       await this.loader?.setBaudRate(this.uploadBaudRate, this.baudRate);
       await this.loader?.disconnect();
       this.loader = undefined;
@@ -217,7 +232,7 @@ export class App extends React.Component<Props, State> {
         progressEl = (
           <div className="d-flex align-items-center">
             <div className="spinner-border me-2 text-info" role="status" aria-hidden="true"></div>
-            Reseting and changing boot mode...
+            Resetting and changing boot mode...
           </div>
         );
         break;
@@ -270,7 +285,7 @@ export class App extends React.Component<Props, State> {
           </ul>
         </nav>
 
-        <Modal show={this.state.progress !== Progress.none} onHide={this.handleCloseWriteModal}>
+        <Modal show={this.state.progress !== Progress.none} onHide={this.state.progress === Progress.done ? this.handleCloseWriteModal : this.handleCancelWritingFiles}>
           <Modal.Header closeButton>
             <Modal.Title>Write built image to ESP device</Modal.Title>
           </Modal.Header>
